@@ -456,7 +456,8 @@ def target_supports_toolchain(target, toolchain_name):
 def prepare_toolchain(src_paths, build_dir, target, toolchain_name,
                       macros=None, clean=False, jobs=1,
                       notify=None, config=None, app_config=None,
-                      build_profile=None, ignore=None, coverage_patterns=None):
+                      build_profile=None, ignore=None, coverage_patterns=None,
+                      compile_commands_only=False):
     """ Prepares resource related objects - toolchain, target, config
 
     Positional arguments:
@@ -516,6 +517,7 @@ def prepare_toolchain(src_paths, build_dir, target, toolchain_name,
     toolchain.config = config
     toolchain.jobs = jobs
     toolchain.build_all = clean
+    toolchain.compile_commands_only = compile_commands_only
 
     if ignore:
         toolchain.add_ignore_patterns(root=".", base_path=".", patterns=ignore)
@@ -534,7 +536,8 @@ def build_project(src_paths, build_path, target, toolchain_name,
                   report=None, properties=None, project_id=None,
                   project_description=None, config=None,
                   app_config=None, build_profile=None, stats_depth=None,
-                  ignore=None, resource_filter=None, coverage_patterns=None):
+                  ignore=None, resource_filter=None, coverage_patterns=None,
+                  compile_commands_only=False):
     """ Build a project. A project may be a test or a user program.
 
     Positional arguments:
@@ -579,7 +582,9 @@ def build_project(src_paths, build_path, target, toolchain_name,
     toolchain = prepare_toolchain(
         src_paths, build_path, target, toolchain_name, macros=macros,
         clean=clean, jobs=jobs, notify=notify, config=config,
-        app_config=app_config, build_profile=build_profile, ignore=ignore, coverage_patterns=coverage_patterns)
+        app_config=app_config, build_profile=build_profile, ignore=ignore,
+        coverage_patterns=coverage_patterns,
+        compile_commands_only=compile_commands_only)
     toolchain.version_check()
 
     # The first path will give the name to the library
@@ -617,6 +622,10 @@ def build_project(src_paths, build_path, target, toolchain_name,
         # Compile Sources
         objects = toolchain.compile_sources(resources, sorted(resources.get_file_paths(FileType.INC_DIR)))
         resources.add_files_to_type(FileType.OBJECT, objects)
+
+        if toolchain.compile_commands_only:
+            notify.info("compile_commands.json generated. Skipping link step.")
+            return (None, None)
 
         res = toolchain.link_program(resources, build_path, name)
 

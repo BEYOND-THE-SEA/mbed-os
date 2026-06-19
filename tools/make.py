@@ -65,7 +65,8 @@ def default_args_dict(options):
         name=options.artifact_name,
         app_config=options.app_config,
         stats_depth=options.stats_depth,
-        ignore=options.ignore
+        ignore=options.ignore,
+        compile_commands_only=options.compile_commands_only
     )
 
 def wrapped_build_project(src_dir, build_dir, mcu, end_warnings, options, *args, **kwargs):
@@ -75,9 +76,10 @@ def wrapped_build_project(src_dir, build_dir, mcu, end_warnings, options, *args,
             src_dir, build_dir, mcu,
             *args, **kwargs
         )
-        if update_file:
-            print('Update Image: %s' % update_file)
-        print('Image: %s' % bin_file)
+        if bin_file is not None:
+            if update_file:
+                print('Update Image: %s' % update_file)
+            print('Image: %s' % bin_file)
     except KeyboardInterrupt as e:
         print("\n[CTRL+c] exit")
     except NotSupportedException as e:
@@ -285,6 +287,13 @@ def main():
         type=argparse_filestring_type,
         default=None,
         help="use the specified linker script"
+    )
+    parser.add_argument(
+        "--compile-commands-only",
+        action="store_true",
+        dest="compile_commands_only",
+        default=False,
+        help="Generate compile_commands.json without building"
     )
     options = parser.parse_args()
 

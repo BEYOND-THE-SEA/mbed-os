@@ -171,6 +171,9 @@ class mbedToolchain(with_metaclass(ABCMeta, object)):
         # Non-incremental compile
         self.build_all = False
 
+        # Generate compile_commands.json only, skip actual compilation
+        self.compile_commands_only = False
+
         # Build output dir
         if PRINT_COMPILER_OUTPUT_AS_LINK:
             self.build_dir = abspath(build_dir)
@@ -501,7 +504,7 @@ class mbedToolchain(with_metaclass(ABCMeta, object)):
                 objects.append(object)
         
         #Export compile commands in a compile_commands.json file
-        self.export_compile_commands = True #May be one day, implement a flag in the mbed compile command to set this
+        self.export_compile_commands = True
         if self.export_compile_commands:
             #Format queue to be compatible with clangd
             """[
@@ -527,9 +530,9 @@ class mbedToolchain(with_metaclass(ABCMeta, object)):
             if(len(lines) > 0):
                 with open(join(item['work_dir'], "compile_commands.json"), "w") as f:
                     f.write(json.dumps(lines, indent=4))
-            
-            
-                
+
+        if self.compile_commands_only:
+            return objects
 
         # Use queues/multiprocessing if cpu count is higher than setting
         jobs = self.jobs if self.jobs else cpu_count()
